@@ -88,7 +88,7 @@ function [res_calib]=comdim_PCA_2020(col, Options);
 %-----------------
 % (suppose 3 SAISIR matrices "spectra1","spectra2","spectra3")
 % collection(1)=spectra1; collection(2)=spectra2; collection(3)=spectra3
-% [res_calib]=comdim_PCA_2019(collection, Options);
+% [res_calib]=comdim_PCA_2020(collection, Options);
 
 tic
 ntable=size(col,2);
