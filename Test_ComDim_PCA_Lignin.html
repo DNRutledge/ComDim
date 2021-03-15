@@ -1,0 +1,288 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Test_ComDim_PCA_Lignin</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2021-03-15"><meta name="DC.source" content="Test_ComDim_PCA_Lignin.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Load data</a></li><li><a href="#5">Plot Data</a></li><li><a href="#6">ComDim calibration parameters</a></li><li><a href="#7">Do ComDim</a></li><li><a href="#8">Statsitics</a></li><li><a href="#9">Plot ComDim Global Scores Q</a></li></ul></div><h2 id="1">Load data</h2><pre class="codeinput">load(<span class="string">'Lignin_Min.mat'</span>);
+<span class="comment">% in F:\Matlab\toolbox\IAQA\ComDim</span>
+
+X=Lignine_Starch_smooth; <span class="comment">% Concatenated TD-NMR signals</span>
+
+Y=Lignine_Starch_Y; <span class="comment">% Conc of Lignin</span>
+
+[nR,nC]=size(X);
+
+Sample_Nums=[1:nR]';
+</pre><pre class="codeinput">seg{1}=[1:20];
+seg{2}=[21:40];
+seg{3}=[41:70];
+seg{4}=[71:100];
+seg{5}=[101:130];
+seg{6}=[131:160];
+seg{7}=[161:180];
+seg{8}=[181:260];
+nSegs=size(seg,2);
+
+Seg_Nums1=[1:nSegs]';
+</pre><pre class="codeinput">clear <span class="string">collection</span>;
+
+<span class="keyword">for</span> i=1:nSegs
+    collection(i).d=X(:,seg{i});
+    collection(i).v=seg{i};
+    collection(i).i=Sample_Nums;
+<span class="keyword">end</span>
+
+BlockName=[<span class="string">' X1'</span>;<span class="string">' X2'</span>;<span class="string">' X3'</span>;<span class="string">' X4'</span>;<span class="string">' X5'</span>;<span class="string">' X6'</span>;<span class="string">' X7'</span>];
+</pre><pre class="codeinput">[nCr,nCc]=size(collection);
+XVar_Nums=[1:nCc];
+</pre><h2 id="5">Plot Data</h2><pre class="codeinput">Figure_DNR(1);
+
+plot(1:260,X')
+axis <span class="string">tight</span>
+yy=get(gca,<span class="string">'YLim'</span>);
+hold <span class="string">on</span>
+<span class="keyword">for</span> i=1:nSegs
+    plot([seg{i}(1,1),seg{i}(1,1)],yy,<span class="string">'k-.'</span>)
+<span class="keyword">end</span>
+set(gca,<span class="string">'FontSize'</span>,8)
+tt=title([<span class="string">'The '</span>,num2str(nSegs),<span class="string">' segments in X'</span>]);
+set(tt,<span class="string">'Fontsize'</span>,10), clear <span class="string">tt</span>
+shg
+</pre><img vspace="5" hspace="5" src="Test_ComDim_PCA_Lignin_01.png" alt=""> <h2 id="6">ComDim calibration parameters</h2><pre class="codeinput">CDs=4;
+r=2;
+c=2;
+
+<span class="comment">% Number of Common Components</span>
+Options.ndim =CDs;
+<span class="comment">% Normalise each data table</span>
+Options.normalise =1;
+<span class="comment">% No comments during calculations</span>
+Options.loquace =0;
+<span class="comment">% Output Local Scores, Scaled and Unscaled Loadings</span>
+Options.Output=<span class="string">'TPL'</span>;
+
+Options.CompMethod=<span class="string">'Normal'</span>;
+</pre><h2 id="7">Do ComDim</h2><pre class="codeinput">[ComDim_Res]=comdim_PCA_2020(collection,Options);
+</pre><h2 id="8">Statsitics</h2><p>Saliences per CD</p><pre class="codeinput">Figure_DNR(1);
+
+Sum_Sal_Dim=ComDim_Res.Sum_saliences_Dim.d;
+<span class="keyword">for</span> i=1:CDs
+    subplot(1,CDs+2,i);
+    bar(ComDim_Res.saliences.d(:,i),<span class="string">'b'</span>), axis <span class="string">tight</span>;
+    xlabel(<span class="string">'Blocks'</span>);
+    ylabel([<span class="string">'Sum Saliences ='</span>, num2str(Sum_Sal_Dim(1,i))]);
+    title([<span class="string">'CC '</span>,num2str(i)]);
+<span class="keyword">end</span>
+
+<span class="comment">% Saliences per Block</span>
+Sum_Sal_Tab=ComDim_Res.Sum_saliences_Tab.d;
+subplot(1,CDs+2,CDs+1);
+bar(Sum_Sal_Tab,<span class="string">'b'</span>), axis <span class="string">tight</span>;
+xlabel(<span class="string">'Blocks'</span>);
+title(<span class="string">'Saliences'</span>);
+
+<span class="comment">% Variances</span>
+subplot(1,CDs+2,CDs+2);
+bar(ComDim_Res.explained.d,<span class="string">'b'</span>), axis <span class="string">tight</span>;
+xlabel(<span class="string">'Components'</span>);
+title(<span class="string">'Variance'</span>);
+</pre><img vspace="5" hspace="5" src="Test_ComDim_PCA_Lignin_02.png" alt=""> <h2 id="9">Plot ComDim Global Scores Q</h2><pre class="codeinput">Figure_DNR(1);
+<span class="keyword">for</span> i=1:CDs
+    subplot(2,CDs,i);
+    plot(ComDim_Res.Q.d(:,i),<span class="string">'b-o'</span>), axis <span class="string">tight</span>;
+    title([<span class="string">'CC '</span>,num2str(i)]);
+
+    subplot(2,CDs,CDs+i);
+    plot(ComDim_Res.P.d(:,i),<span class="string">'b-'</span>), axis <span class="string">tight</span>;
+
+<span class="keyword">end</span>
+suptitle(<span class="string">'ComDim Global Scores &amp; Scaled Loadings'</span>);
+</pre><img vspace="5" hspace="5" src="Test_ComDim_PCA_Lignin_03.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Load data
+load('Lignin_Min.mat');
+% in F:\Matlab\toolbox\IAQA\ComDim
+
+X=Lignine_Starch_smooth; % Concatenated TD-NMR signals
+
+Y=Lignine_Starch_Y; % Conc of Lignin
+
+[nR,nC]=size(X);
+
+Sample_Nums=[1:nR]';
+
+%%
+seg{1}=[1:20];
+seg{2}=[21:40];
+seg{3}=[41:70];
+seg{4}=[71:100];
+seg{5}=[101:130];
+seg{6}=[131:160];
+seg{7}=[161:180];
+seg{8}=[181:260];
+nSegs=size(seg,2);
+
+Seg_Nums1=[1:nSegs]';
+
+%%
+clear collection;
+
+for i=1:nSegs
+    collection(i).d=X(:,seg{i});
+    collection(i).v=seg{i};
+    collection(i).i=Sample_Nums;
+end
+
+BlockName=[' X1';' X2';' X3';' X4';' X5';' X6';' X7'];
+
+%%
+[nCr,nCc]=size(collection);
+XVar_Nums=[1:nCc];
+
+
+%% Plot Data
+
+Figure_DNR(1);
+
+plot(1:260,X')
+axis tight
+yy=get(gca,'YLim');
+hold on
+for i=1:nSegs
+    plot([seg{i}(1,1),seg{i}(1,1)],yy,'k-.')
+end
+set(gca,'FontSize',8)
+tt=title(['The ',num2str(nSegs),' segments in X']);
+set(tt,'Fontsize',10), clear tt
+shg
+
+
+%% ComDim calibration parameters
+
+CDs=4;
+r=2;
+c=2;
+
+% Number of Common Components
+Options.ndim =CDs;
+% Normalise each data table
+Options.normalise =1;
+% No comments during calculations
+Options.loquace =0;
+% Output Local Scores, Scaled and Unscaled Loadings
+Options.Output='TPL';
+
+Options.CompMethod='Normal';
+
+
+%% Do ComDim
+[ComDim_Res]=comdim_PCA_2020(collection,Options);
+
+%% Statsitics
+% Saliences per CD
+Figure_DNR(1);
+
+Sum_Sal_Dim=ComDim_Res.Sum_saliences_Dim.d;
+for i=1:CDs
+    subplot(1,CDs+2,i);
+    bar(ComDim_Res.saliences.d(:,i),'b'), axis tight;
+    xlabel('Blocks');
+    ylabel(['Sum Saliences =', num2str(Sum_Sal_Dim(1,i))]);
+    title(['CC ',num2str(i)]);
+end
+
+% Saliences per Block
+Sum_Sal_Tab=ComDim_Res.Sum_saliences_Tab.d;
+subplot(1,CDs+2,CDs+1);
+bar(Sum_Sal_Tab,'b'), axis tight;
+xlabel('Blocks');
+title('Saliences');
+
+% Variances
+subplot(1,CDs+2,CDs+2);
+bar(ComDim_Res.explained.d,'b'), axis tight;
+xlabel('Components');
+title('Variance');
+
+
+%% Plot ComDim Global Scores Q 
+Figure_DNR(1);
+for i=1:CDs
+    subplot(2,CDs,i);
+    plot(ComDim_Res.Q.d(:,i),'b-o'), axis tight;
+    title(['CC ',num2str(i)]);
+
+    subplot(2,CDs,CDs+i);
+    plot(ComDim_Res.P.d(:,i),'b-'), axis tight;
+
+end
+suptitle('ComDim Global Scores & Scaled Loadings');
+
+
+
+##### SOURCE END #####
+--></body></html>
