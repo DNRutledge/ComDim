@@ -1,26 +1,30 @@
 # ComDim
-ComDim
-ComDim is an unsupervised multi-block method that aims to simultaneously consider multiple data tables
+
+"ComDim" is an unsupervised multi-block method that aims to simultaneously consider multiple data tables
 to find the components that are common to all the tables and those that are specific to each data table,
 with the contribution of each of the tables to each of these components.
-ComDim determines a common space describing the dispersion of the samples in all the blocks,
+
+* ComDim determines a common space describing the dispersion of the samples in all the blocks,
 each block having a specific weight (salience, λ) associated with each dimension in this common space.
-Significant differences in the saliences for a given dimension reflect the fact
+
+* Significant differences in the saliences for a given dimension reflect the fact
 that the dimension contains different amounts of information coming from each block.
-In addition to the saliences, Local loadings for each analyzed block and two different sets of scores are obtained.
-The first set corresponds to the Local scores for each analyzed block
+
+* In addition to the saliences, Local loadings for each analyzed block and two different sets of scores are obtained.
+
+* The first set corresponds to the Local scores for each analyzed block
 while the second set is composed of the Global scores, common to all the blocks.
 
 %
-% USAGE :
+% "USAGE :"
 %---------------
 % [res_calib]=comdim_PCA_2020(col, Options);
 %
-% INPUT :
+% "INPUT :"
 %---------------
-% col : vector of saisir files (the numbers "nrow" of rows in each table must be equal) .
+% col : vector of "Saisir" files (the numbers "nrow" of rows in each table must be equal) .
 %
-% Options for ComDim:
+% Options :
 % Options.ndim : Number of common dimensions
 % Options.normalise : 0== no; 1== yes (default)
 % Options.threshold : If the "difference of fit" < threshold
@@ -48,7 +52,7 @@ while the second set is composed of the Global scores, common to all the blocks.
 % if FileName=='Toto', then results saved to 'Toto_01', Toto_02', etc
 %
 %
-% OUTPUT :
+% "OUTPUT :"
 %-----------------
 % res_calib with fields:
 % Q : Global scores_calib (nrow x ndim)
@@ -69,7 +73,7 @@ while the second set is composed of the Global scores, common to all the blocks.
 % SingVal : vector of singular values (1 x ndim)
 % 
 %
-% CALLS:
+% "CALLS :"
 %-----------------
 % mlr_DB
 % Normalise_DB
@@ -79,22 +83,31 @@ while the second set is composed of the Global scores, common to all the blocks.
 %   which calls
 %   RowsPartition
 %
-% REFERENCES :
+% "REFERENCES :"
 %-----------------
-% Method published by:
+% "Method published by :"
 % E.M. Qannari, I. Wakeling, P. Courcoux and H. J. H. MacFie
 % in Food quality and Preference 11 (2000) 151-154
 %
-% Example application
+% V. Cariou, D. Jouan-Rimbaud Bouveresse E.M. Qannari, D.N. Rutledge
+% "ComDim methods for the analysis of multiblock data in a data fusion perspective" in
+% Data Fusion Methodology and Applications (Data Handling in Science and Technology), (ed. Marina Cocchi)
+%
+% Hery Mitsutake, Douglas N. Rutledge, Ronei Jesus Poppi, Márcia Cristina Breitkreitz
+% Extraction of information about structural changes in a semi-solid pharmaceutical formulation
+% from Near-infrared and Raman images by MCR-ALS and ComDim
+% Journal of Chemometrics (2020) 34:e3288. DOI: 10.1002/cem.3288
+%
+%
+% "Example applications :"
 % Chemometric Tools to Highlight Possible Migration of Compounds
 % from Packaging to Sunflower Oils
 % J. Maalouly, N. Hayeck, A. Kassouf,D. N. Rutledge and V. Ducruet
 % J. Agric. Food Chem. 2013, 61, 10565?10573
 
 
-% EXAMPLE :
+% "EXAMPLE :"
 %-----------------
 % (suppose 3 SAISIR matrices "spectra1","spectra2","spectra3")
 % collection(1)=spectra1; collection(2)=spectra2; collection(3)=spectra3
 % [res_calib]=comdim_PCA_2020(collection, Options);
-
