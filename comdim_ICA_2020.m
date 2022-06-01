@@ -1,12 +1,12 @@
-function [res_calib]=comdim_PCA_2020(col, Options);
+function [res_calib]=comdim_ICA_2020(col, Options);
 %comdim			- Finding common dimensions in multitable data (saisir format)
 %
-% With data compression methods 
+% With data compression methods INSIDE jade_DNR_2014
 %
 %
 % USAGE :
 %---------------
-% [res_calib]=comdim_PCA_2020(col, Options);
+% [res_calib]=comdim_ICA_2020(col, Options);
 %
 % INPUT :
 %---------------
@@ -20,10 +20,24 @@ function [res_calib]=comdim_PCA_2020(col, Options);
 %
 % % % % To accelerate the ComDim calculations with big matrices
 % % % % Options.CompMethod = 'Normal', 'Kernel', 'PCT', 'Tall_Wide', 'Tall' or 'Wide'
-% 'Tall_Wide' not yet available
 % % % % Options.Partitions = number of partition if X 'Tall' or 'Wide'
 % % % % Options.rows_par = number of row partition if X 'Tall' or 'Tall_Wide'
 % % % % Options.cols_par = number of columnpartition if X 'Tall_Wide' or 'Wide'
+%
+% Options for ICA:
+% To accelerate the ICA calculations with big matrices
+% Options.Data= 'Data', 'Loadings'
+%
+% Compression is done INSIDE jade_DNR_2014
+% For compatability 
+% Options.Method=Options.CompMethod; 
+%
+% Options.Method = 'Normal' , 'Tall', 'Wide', 'Kernel', 'Tall_Wide'
+% Options.Partitions = number of partition if X 'Tall' or 'Wide'
+% Options.rows_par = number of row partition if X 'Tall' or 'Tall_Wide'
+% Options.cols_par = number of columnpartition if X 'Tall_Wide' or 'Wide'
+%
+% Options.SortICs =0; % Don't sort ICs by variance
 %
 % Options.loquace : 1== displays calculation times; 0== no (default)
 %
@@ -59,7 +73,7 @@ function [res_calib]=comdim_PCA_2020(col, Options);
 %
 %
 % SingVal : vector of singular values (1 x ndim)
-% 
+%
 %
 % CALLS:
 %-----------------
@@ -72,31 +86,38 @@ function [res_calib]=comdim_PCA_2020(col, Options);
 %   which calls
 %   RowsPartition
 %
+% jade_DNR_2014
+%   which calls
+%   jadeR_2005
+%   IC_sort
+%
 % REFERENCES :
 %-----------------
 % Method published by:
 % E.M. Qannari, I. Wakeling, P. Courcoux and H. J. H. MacFie
 % in Food quality and Preference 11 (2000) 151-154
 %
-% V. Cariou, D. Jouan-Rimbaud Bouveresse E.M. Qannari, D.N. Rutledge
-% "ComDim methods for the analysis of multiblock data in a data fusion perspective" in
-% Data Fusion Methodology and Applications (Data Handling in Science and Technology), (ed. Marina Cocchi)
+% D. Juan-Rimbaud Bouveresse, D. N. Rutledge
+% Independent Components Analysis with the Jade Algorithm
+% TrAC., (2013), 50, 22–32
+% 
+% D. N. Rutledge and D. Juan-Rimbaud Bouveresse
+% Corrigendum to "Independent Components Analysis with the Jade Algorithm"
+% TrAC., (2015), 67, 220
+
 %
 % Example application
 % Chemometric Tools to Highlight Possible Migration of Compounds
 % from Packaging to Sunflower Oils
 % J. Maalouly, N. Hayeck, A. Kassouf,D. N. Rutledge and V. Ducruet
 % J. Agric. Food Chem. 2013, 61, 10565?10573
-% Hery Mitsutake, Douglas N. Rutledge, Ronei Jesus Poppi, Márcia Cristina Breitkreitz
-% Extraction of information about structural changes in a semi-solid pharmaceutical formulation
-% from Near-infrared and Raman images by MCR-ALS and ComDim
-% Journal of Chemometrics (2020) 34:e3288. DOI: 10.1002/cem.3288
-%
+
+
 % EXAMPLE :
 %-----------------
 % (suppose 3 SAISIR matrices "spectra1","spectra2","spectra3")
 % collection(1)=spectra1; collection(2)=spectra2; collection(3)=spectra3
-% [res_calib]=comdim_PCA_2020(collection, Options);
+% [res_calib]=comdim_ICA(collection, Options);
 
 tic
 ntable=size(col,2);
@@ -120,7 +141,7 @@ if exist('Options','var')
     else
         Options.normalise=1;
         normalise= Options.normalise;
-   end
+    end
 
     if isfield(Options,'threshold')
         threshold= Options.threshold;
@@ -151,20 +172,6 @@ if exist('Options','var')
         FileName= Options.FileName;
     end
 
-    if isfield(Options,'CompMethod')
-        CompMethod= Options.CompMethod;
-    else
-        Options.CompMethod= 'Normal';
-        CompMethod= Options.CompMethod;
-    end
-
-    if isfield(Options,'Method')
-        Method= Options.Method;
-    else
-        Options.Method= 'Normal';
-        Method= Options.Method;
-    end
-
     if isfield(Options,'loquace')
         loquace= Options.loquace;
     else
@@ -178,6 +185,12 @@ if exist('Options','var')
     else
         Options.Test=0;
         Test= Options.Test;
+    end
+    
+% For compatability with ICA
+% Options.Method=Options.CompMethod; 
+    if isfield(Options,'CompMethod')
+        Options.Method=Options.CompMethod;
     end
 end
 
@@ -214,30 +227,30 @@ for i=1:ntable
     if normalise==1
         % Normalise original blocks
         [X_Normed, Norm.d(i), Mean(i).d]=Normalise_DB(col(i).d); % MS
-
+    
         res_calib.MEAN(i).d= Mean(i).d';
         res_calib.MEAN(i).i= col(i).v';
         res_calib.MEAN(i).v= TableLabels(i,:);
-
+        
         temp_tabCalib{i}.d=X_Normed;
         s_n{i}=X_Normed;
 
     else
         % Do nothing
         Norm.d(i)= 1;
-
+        
         res_calib.MEAN(i).d= zeros(size(col(i).d,2),1);
         res_calib.MEAN(i).i= col(i).v';
         res_calib.MEAN(i).v= TableLabels(i,:);
-
+        
         temp_tabCalib{i}.d=col(i).d;
         s_n{i}=col(i).d;
     end
-
+    
     % Difficult to preallocate (Total number of variables)
     X_mat=[X_mat,col(i).d]; % X blocs concaténés
     Xnorm_mat=[Xnorm_mat,temp_tabCalib{i}.d]; % tab blocs concaténés
-
+    
 end
 
 res_calib.NORM.d= Norm.d;
@@ -254,16 +267,26 @@ if loquace==1
 end
 %%%%%%%%%%%
 
-%% Do Compression
+%% Do NO Compression
+% Compression is done INSIDE jade_DNR_2014
+% For compatability 
+% Options.Method=Options.CompMethod; 
 
-[s_r]=Compress_Data_2020(s_n, Options);
+% [s_r]=Compress_Data_2020(s_n, Options);
+[s_r]=s_n;
 
-%%
-% Do ComDim-PCA
+%% Do ComDim-ICA
 h1 = waitbar(0,'Doing ComDim...');
 
 % main loop
 unexplained=ntable; % Warning!: true only if the tables were set to norm=1
+
+% %%%%%%%%%%%%%%%%%%%%%%%
+ICs=ndim;
+% Start with ndim ICs
+% and decrease by 1 each time
+% or use ndim ICs each time
+% %%%%%%%%%%%%%%%%%%%%%%%
 
 % Do ComDim
 tic
@@ -280,7 +303,6 @@ for dim=1:ndim
     qold=100;
 
     iters=0;
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     q_Mat{dim}=qini;
     while and(norm(qold-qini)>threshold, iters<100)
@@ -293,10 +315,14 @@ for dim=1:ndim
             W = [W, sqrt(lambda(j)).*s_r{j}];
         end
 
-        [u,sv,v]=svd(W,'econ');
-        qtmp =u(:,1);
+        %%%%%% ICA
+%         ICs=ndim;
+        [Signal,Scores] =  jade_DNR_2014(W,ICs, Options);  % Compression is done INSIDE jade_DNR_2014
+
+        sv=sqrt(Scores(:,1)'*Scores(:,1));
+        qtmp=Scores(:,1)/sv;
     
-        % Takes each table into account for lambda after ICA
+        % takes each table into account for lambda after ICA
         for j=1:ntable
 %             lambda(j)=qtmp'*(s_r{j}*s_r{j}')*qtmp;
             % SLOWER but takes up less memory
@@ -306,7 +332,7 @@ for dim=1:ndim
             
             q=q+(lambda(j)*qtmp); 
         end
-
+            
         q=q./sqrt(q'*q); % standardizes t
         if abs(min(q))>abs(max(q))
             q=-q;
@@ -339,12 +365,20 @@ for dim=1:ndim
     for j=1:ntable
         s_r{j}=aux*s_r{j};
     end
+    
+% %%%%%%%%%%%%%%%%%%%%%%%
+	ICs=ICs-1;
+% Start with ndim ICs
+% and decrease by 1 each time
+% %%%%%%%%%%%%%%%%%%%%%%%
+
 end
 
 Q.i=col(1).i;
 Q.v=DimLabels;
 res_calib.Q=Q;
 
+%%
 duree=toc;
 if loquace==1
     disp(['Scores finished after ',num2str(duree)]);
@@ -352,12 +386,13 @@ end
 
 close(h1);
 
-meanW=[];
-for j=1:ntable
-    meanW=[meanW,mean(s_r{j})];
-end
+clear s_n;
 
-clear s_n s_r;
+%%
+% explained.i='% explained';
+% explained.v=DimLabels; % Dimensions
+% res_calib.explained=explained;
+% clear explained;
 
 %%
 explained.d=varexp/sum(varexp)*100;
@@ -366,7 +401,6 @@ explained.v=DimLabels; % Dimensions
 res_calib.explained=explained;
 clear varexp explained;
 
-%%
 % Calculate Sums of saliences for each Dim
 Sum_saliences_Dim.d=sum(saliences.d);
 Sum_saliences_Dim.i='Sum Dim Saliences';
@@ -385,15 +419,15 @@ clear Sum_saliences_Tab;
 
 saliences.i=TableLabels;% tables
 saliences.v=DimLabels; % Dimensions
+
 res_calib.saliences=saliences;
-% clear saliences;
 
 %% Calculate Normalised concatenated Xs ('Calib') from col
 % Calculate concatenated CD loadings
 % Reorganise Loadings - 1 matrix / LV
 
 %%%%%% If Output==[], nothing else is calculated
-% tic;
+tic;
 if ~isempty(Output)
     clear L_CD_Vec Calib;
     L_CD_Vec=[];
@@ -409,25 +443,24 @@ isL=((strfind(Output,'L')));
 isP=((strfind(Output,'P')));
 isTLP=[isT,isP,isL];
 
-% tic;
 % Calculate concatenated CD loadings
 % Reorganise Loadings - 1 matrix / LV
 for j=1:ndim
     T_mat=[];
-    
-        for i=1:ntable
+
+    for i=1:ntable
+        % Q.d are orthonormal in ICA & PCA
+        temp=temp_tabCalib{i}.d'*Q.d(:,j); % Scaled CD Loadings "locaux" calculés
+
+        if  ~isempty(isP)
+            L_CD{i}(:,j)=temp;
+        end
+
+        if  ~isempty(isL)
             % Q.d are orthonormal in ICA & PCA
-            temp=temp_tabCalib{i}.d'*Q.d(:,j); % Scaled CD Loadings "locaux" calculés
-            
-            if  ~isempty(isP)
-                L_CD{i}(:,j)=temp;
-            end
-            
-            if  ~isempty(isL)
-                % Q.d are orthonormal in ICA & PCA
-                L_X{i}(:,j)=col(i).d'*Q.d(:,j); % Unscaled X Loadings "locaux" calculés;
-            end
-            
+            L_X{i}(:,j)=col(i).d'*Q.d(:,j); % Unscaled X Loadings "locaux" calculés;
+        end
+        
 %         T_mat=[T_mat,temp_tabCalib{i}.d*temp/(temp'*temp)]; % Scores "locaux"];
         T_Loc=temp_tabCalib{i}.d*temp/(temp'*temp);
         T_mat=[T_mat,T_Loc]; % Scores "locaux"];
@@ -436,11 +469,11 @@ for j=1:ndim
 %             T{i}(:,j)=temp_tabCalib{i}.d*temp/(temp'*temp); % Scores "locaux"
             T{i}(:,j)=T_Loc; % Scores "locaux"
         end
-            
-            % Deflate each temp_tabCalib
-            temp_tabCalib{i}.d=temp_tabCalib{i}.d-Q.d(:,j)*temp';
-        end
-    
+
+        % Deflate each temp_tabCalib
+        temp_tabCalib{i}.d=temp_tabCalib{i}.d-Q.d(:,j)*temp';
+end
+
     %     % For each CC
     %     % MLR b-coefficients between Local and Global Scores
     [b0,b(:,j)]=mlr_DB(T_mat,Q.d(:,j),0);
@@ -470,7 +503,7 @@ if ~isempty(Output)
         end
         
     end
-    
+
     if  ~isempty(isL)
         L_X_Vec=X_mat'*Q.d; % Unscaled X Loadings "globaux"
         
@@ -507,6 +540,7 @@ if  ~isempty(isT)
     res_calib.T.d=T;
 end
 
+
 % T is no longer needed 
 clear T T_mat;
 
@@ -514,8 +548,8 @@ if  ~isempty(isP)
     res_calib.P.i=[1:nC]';% numbers of all variables;
     res_calib.P.v=DimLabels; % Dimensions
     res_calib.P.d= L_CD_Vec;
-    
-    res_calib.P_Loc.i=TableLabels; % Tables
+
+    res_calib.P_Loc.i=TableLabels;
     res_calib.P_Loc.v=DimLabels; % Dimensions
     res_calib.P_Loc.d= L_CD;
     
@@ -548,27 +582,16 @@ end
 clear L_X_Vec;
 clear L_X;
 
-%%
 % Singular value calculated from b and saliences 
 % Since :
-% b_T_Q(:,j)=saliences.d(:,j).*saliences.d(:,j)/SingVal.d(1,j);
+%     b_T_Q(:,j)=saliences.d(:,j).*saliences.d(:,j)/SingVal.d(1,j);
 for j=1:ndim
     SingVal.d(:,j)=b(:,j)'*(saliences.d(:,j).^2)/(b(:,j)'*b(:,j));
 end
-
-if exist('Options','var')
-    if isfield(Options,'CompMethod');
-        switch Options.CompMethod
-            case {'Kernel' 'Tall' 'Wide'}
-                SingVal.i='Singular value';
-                SingVal.v=DimLabels;
-                res_calib.SingVal=SingVal; % DB, 13.03.2014
-                clear SingVal;
-            otherwise
-                % Do nothing
-        end
-    end
-end
+SingVal.i='Singular value';
+SingVal.v=DimLabels;
+res_calib.SingVal=SingVal; % DB, 13.03.2014
+clear SingVal;
 
 clear saliences;
 
